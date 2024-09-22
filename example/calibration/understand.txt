@@ -1,0 +1,15 @@
+这段代码是一个JSON格式的数据，包含了关于相机校准的信息。下面是每个字段的含义：
+- `final_reproj_error`: 最后的重投影误差，这是评价相机校准好坏的一个指标，数值越小表示校准越精确。
+- `fps`: 每秒的帧数，这是相机每秒能拍摄多少张图片的指标。
+- `image_height`: 图像的高度，单位为像素。
+- `image_width`: 图像的宽度，单位为像素。
+- `intrinsic_type`: 内部参数类型，这里的"FISHEYE"表示这是一个鱼眼镜头。
+- `intrinsics`: 内部参数，包含了相机的各种内部参数：
+  - `aspect_ratio`: 宽高比。
+  - `focal_length`: 焦距，单位为像素。
+  - `principal_pt_x`和`principal_pt_y`: 主点坐标，即图像的中心点坐标。
+  - `radial_distortion_1`到`radial_distortion_4`: 径向畸变系数，这是描述镜头畸变的参数。
+  - `skew`: 偏斜系数，通常在针孔相机模型中为0。
+- `nr_calib_images`: 用于校准的图像数量。
+- `stabelized`: 是否稳定，这里为"false"，表示相机可能没有使用图像稳定技术。
+总的来说，这段代码提供了关于一个鱼眼相机的内部参数和性能指标的信息。

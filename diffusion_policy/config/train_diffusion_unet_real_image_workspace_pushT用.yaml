@@ -1,0 +1,294 @@
+defaults:
+  - _self_
+  - task: real_pusht_image
+
+name: train_diffusion_unet_image
+_target_: diffusion_policy.workspace.train_diffusion_unet_image_workspace.TrainDiffusionUnetImageWorkspace
+
+task_name: ${task.name}
+shape_meta: ${task.shape_meta}
+exp_name: "default"
+
+horizon: 16
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
+dataset_obs_steps: ${n_obs_steps}
+past_action_visible: False
+keypoint_visible_rate: 1.0
+obs_as_global_cond: True
+
+policy:
+  _target_: diffusion_policy.policy.diffusion_unet_image_policy.DiffusionUnetImagePolicy
+
+  shape_meta: ${shape_meta}
+  
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler
+    num_train_timesteps: 100
+    beta_start: 0.0001
+    beta_end: 0.02
+    # beta_schedule is important
+    # this is the best we found
+    beta_schedule: squaredcos_cap_v2
+    clip_sample: True
+    set_alpha_to_one: True
+    steps_offset: 0
+    prediction_type: epsilon # or sample
+
+  obs_encoder:
+    _target_: diffusion_policy.model.vision.multi_image_obs_encoder.MultiImageObsEncoder
+    shape_meta: ${shape_meta}
+    rgb_model:
+      _target_: diffusion_policy.model.vision.model_getter.get_resnet
+      name: resnet18
+      weights: null
+    resize_shape: [240, 320]
+    crop_shape: [216, 288] # ch, cw 240x320 90%
+    random_crop: True
+    use_group_norm: True
+    share_rgb_model: False
+    imagenet_norm: True
+
+  horizon: ${horizon}
+  n_action_steps: ${eval:'${n_action_steps}+${n_latency_steps}'}
+  n_obs_steps: ${n_obs_steps}
+  num_inference_steps: 100
+  obs_as_global_cond: ${obs_as_global_cond}
+  # crop_shape: null
+  diffusion_step_embed_dim: 128
+  down_dims: [512, 1024, 2048]
+  kernel_size: 5
+  n_groups: 8
+  cond_predict_scale: True
+
+  # scheduler.step params
+  # predict_epsilon: True
+
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+dataloader:
+  batch_size: 64
+  num_workers: 8
+  shuffle: True
+  pin_memory: True
+  persistent_workers: True
+
+val_dataloader:
+  batch_size: 64
+  num_workers: 8
+  shuffle: False
+  pin_memory: True
+  persistent_workers: True
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
+
+training:
+  device: "cuda:0"
+  seed: 42
+  debug: False
+  resume: True
+  # optimization
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  num_epochs: 600
+  gradient_accumulate_every: 1
+  # EMA destroys performance when used with BatchNorm
+  # replace BatchNorm with GroupNorm.
+  use_ema: True
+  freeze_encoder: False
+  # training loop control
+  # in epochs
+  rollout_every: 50
+  checkpoint_every: 50
+  val_every: 1
+  sample_every: 5
+  # steps per epoch
+  max_train_steps: null
+  max_val_steps: null
+  # misc
+  tqdm_interval_sec: 1.0
+
+logging:
+  project: diffusion_policy_debug
+  resume: True
+  mode: online
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+  tags: ["${name}", "${task_name}", "${exp_name}"]
+  id: null
+  group: null
+
+checkpoint:
+  topk:
+    monitor_key: train_loss
+    mode: min
+    k: 5
+    format_str: 'epoch={epoch:04d}-train_loss={train_loss:.3f}.ckpt'
+  save_last_ckpt: True
+  save_last_snapshot: False
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+
+hydra:
+  job:
+    override_dirname: ${name}
+  run:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  sweep:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+    subdir: ${hydra.job.num}
+
+
+
+# defaults:
+#   - _self_  # 使用当前配置文件的默认设置
+#   - task: real_pusht_image  # 引用另一个配置文件 `real_pusht_image`，该文件定义了任务的相关配置
+
+# name: train_diffusion_unet_image  # 任务名称
+# _target_: diffusion_policy.workspace.train_diffusion_unet_image_workspace.TrainDiffusionUnetImageWorkspace  # 目标类
+
+# task_name: ${task.name}  # 使用任务的名称
+# shape_meta: ${task.shape_meta}  # 使用任务的形状元数据
+# exp_name: "default"  # 实验名称
+
+# horizon: 16  # 时间范围
+# n_obs_steps: 2  # 观测步数
+# n_action_steps: 8  # 动作步数
+# n_latency_steps: 0  # 延迟步数
+# dataset_obs_steps: ${n_obs_steps}  # 数据集观测步数
+# past_action_visible: False  # 是否显示过去的动作
+# keypoint_visible_rate: 1.0  # 关键点可见率
+# obs_as_global_cond: True  # 观测作为全局条件
+
+# policy:  # 策略配置
+#   _target_: diffusion_policy.policy.diffusion_unet_image_policy.DiffusionUnetImagePolicy  # 目标类
+
+#   shape_meta: ${shape_meta}  # 形状元数据
+  
+#   noise_scheduler:  # 噪声调度器配置
+#     _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler  # 目标类
+#     num_train_timesteps: 100  # 训练时间步数
+#     beta_start: 0.0001  # beta起始值
+#     beta_end: 0.02  # beta结束值
+#     beta_schedule: squaredcos_cap_v2  # beta调度策略
+#     clip_sample: True  # 是否剪裁样本
+#     set_alpha_to_one: True  # 是否设置alpha为1
+#     steps_offset: 0  # 步数偏移
+#     prediction_type: epsilon  # 预测类型
+
+#   obs_encoder:  # 观测编码器配置
+#     _target_: diffusion_policy.model.vision.multi_image_obs_encoder.MultiImageObsEncoder  # 目标类
+#     shape_meta: ${shape_meta}  # 形状元数据
+#     rgb_model:
+#       _target_: diffusion_policy.model.vision.model_getter.get_resnet  # 目标类
+#       name: resnet18  # 使用ResNet18模型
+#       weights: null  # 无预训练权重
+#     resize_shape: [240, 320]  # 调整图像大小
+#     crop_shape: [216, 288]  # 裁剪图像大小
+#     random_crop: True  # 随机裁剪
+#     use_group_norm: True  # 使用组归一化
+#     share_rgb_model: False  # 不共享RGB模型
+#     imagenet_norm: True  # 使用ImageNet归一化
+
+#   horizon: ${horizon}  # 时间范围
+#   n_action_steps: ${eval:'${n_action_steps}+${n_latency_steps}'}  # 动作步数加延迟步数
+#   n_obs_steps: ${n_obs_steps}  # 观测步数
+#   num_inference_steps: 100  # 推理步数
+#   obs_as_global_cond: ${obs_as_global_cond}  # 观测作为全局条件
+#   diffusion_step_embed_dim: 128  # 扩散步骤嵌入维度
+#   down_dims: [512, 1024, 2048]  # 降维大小
+#   kernel_size: 5  # 核大小
+#   n_groups: 8  # 组数
+#   cond_predict_scale: True  # 条件预测比例
+
+# ema:  # 指数移动平均模型配置
+#   _target_: diffusion_policy.model.diffusion.ema_model.EMAModel  # 目标类
+#   update_after_step: 0  # 多少步后更新
+#   inv_gamma: 1.0  # 反伽马
+#   power: 0.75  # 幂
+#   min_value: 0.0  # 最小值
+#   max_value: 0.9999  # 最大值
+
+# dataloader:  # 数据加载器配置
+#   batch_size: 64  # 批次大小
+#   num_workers: 8  # 工作线程数
+#   shuffle: True  # 是否打乱数据
+#   pin_memory: True  # 是否固定内存
+#   persistent_workers: True  # 是否持久化工作线程
+
+# val_dataloader:  # 验证数据加载器配置
+#   batch_size: 64  # 批次大小
+#   num_workers: 8  # 工作线程数
+#   shuffle: False  # 是否打乱数据
+#   pin_memory: True  # 是否固定内存
+#   persistent_workers: True  # 是否持久化工作线程
+
+# optimizer:  # 优化器配置
+#   _target_: torch.optim.AdamW  # 目标类
+#   lr: 1.0e-4  # 学习率
+#   betas: [0.95, 0.999]  # beta参数
+#   eps: 1.0e-8  # epsilon
+#   weight_decay: 1.0e-6  # 权重衰减
+
+# training:  # 训练配置
+#   device: "cuda:0"  # 设备
+#   seed: 42  # 随机种子
+#   debug: False  # 调试模式
+#   resume: True  # 是否恢复训练
+#   lr_scheduler: cosine  # 学习率调度器
+#   lr_warmup_steps: 500  # 学习率预热步数
+#   num_epochs: 600  # 训练轮数
+#   gradient_accumulate_every: 1  # 梯度累积步数
+#   use_ema: True  # 是否使用EMA
+#   freeze_encoder: False  # 是否冻结编码器
+#   rollout_every: 50  # 每多少轮进行一次rollout
+#   checkpoint_every: 50  # 每多少轮保存一次检查点
+#   val_every: 1  # 每多少轮进行一次验证
+#   sample_every: 5  # 每多少轮采样一次
+#   max_train_steps: null  # 最大训练步数
+#   max_val_steps: null  # 最大验证步数
+#   tqdm_interval_sec: 1.0  # 进度条更新间隔
+
+# logging:  # 日志配置
+#   project: diffusion_policy_debug  # 项目名称
+#   resume: True  # 是否恢复日志
+#   mode: online  # 日志模式
+#   name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}  # 日志名称
+#   tags: ["${name}", "${task_name}", "${exp_name}"]  # 日志标签
+#   id: null  # 日志ID
+#   group: null  # 日志组
+
+# checkpoint:  # 检查点配置
+#   topk:
+#     monitor_key: train_loss  # 监控的关键字
+#     mode: min  # 最小化模式
+#     k: 5  # 保存前k个检查点
+#     format_str: 'epoch={epoch:04d}-train_loss={train_loss:.3f}.ckpt'  # 检查点格式
+#   save_last_ckpt: True  # 保存最后一个检查点
+#   save_last_snapshot: False  # 是否保存最后一个快照
+
+# multi_run:  # 多次运行配置
+#   run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}  # 运行目录
+#   wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}  # wandb名称基
+
+# hydra:  # Hydra配置
+#   job:
+#     override_dirname: ${name}  # 覆盖目录名
+#   run:
+#     dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}  # 运行目录
+#   sweep:
+#     dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}  # 扫描目录
+#     subdir: ${hydra.job.num}  # 子目录

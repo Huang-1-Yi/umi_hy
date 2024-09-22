@@ -1,0 +1,21 @@
+1.calibrate_gripper_latency 标定抓手的延迟,同理，标定gripper、robot和slam、uav_camera等的延迟、参数、手眼等
+2.check_gopro_orientation检查视频有无旋转
+3.control_robot_spacemouse_traj通过读取SpaceMouse的输入来控制机器人的运动。
+4.count_dataset_videos 统计数据集数量并打印
+5.detect_aruco
+6.detect_bad_rotation
+draw_aurco_detection
+draw_charuco_detection
+eval_real_robot
+filter_videos
+gen_aruco_tag_pdf
+gen_charuco_board
+gen_image_mask
+generate_video_thumbnail
+generate_video_thumbnail_demos
+record_robot_world_hand_eye
+replay_real_robot
+reset_usb
+slam_pose_replay
+uvc_camera
+uvc_camera_test

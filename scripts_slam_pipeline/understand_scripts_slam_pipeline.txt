@@ -1,0 +1,17 @@
+ython run_slam_pipeline.py example_demo_session
+
+1.00_process_videos 
+遍历session_dir(example_demo_session)中的每个目录,将其转换为 pathlib 对象,并确保目录是绝对路径
+如果input_dir(raw_videos)不存在则创建该目录，并将 session 目录中所有的 .mp4 文件移动到 input_dir 中
+如果mapping.mp4不存在，查找 input_dir 中最大的 .mp4 文件，并将它重命名为 mapping.mp4
+结构为：
+-- example_demo_session
+    -- raw_videos 原始视频，运行开始时，将目录内所有视频移入该文件夹
+        -- gripper_calibration
+    -- demos 演示视频
+2.使用命令行参数和Docker来并行处理GoPro视频文件，提取IMU数据
+3.使用命令行参数和Docker来处理视频文件，并运行SLAM以生成相机轨迹和地图
+4.处理通过摄像头捕捉的视频，识别其中的 ArUco 标记，并将检测到的标记信息保存到文件中
+5.执行SLAM标记和夹持器范围的校准操作。它接受一个或多个会话目录作为输入，针对每个目录内的数据执行一系列的校准脚本
+6.将从多个摄像头收集到的视频数据,通过分析视频中的视觉标记(如ArUco标记),提取机器人的操作动作(如夹持器的开合)、摄像头的位置和朝向等信息,组织成一个结构化的数据集
+7.从多源视频数据中自动提取和处理机器学习训练所需的数据,包括机器人的末端执行器(End-Effector, EEF)位置、朝向、夹持器宽度以及相应的视频帧,

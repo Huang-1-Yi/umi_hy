@@ -1,0 +1,207 @@
+defaults:
+  - _self_
+  - task: umi
+
+name: train_diffusion_unet_timm
+# _target_: diffusion_policy.workspace.train_diffusion_unet_image_workspace.TrainDiffusionUnetImageWorkspace
+_target_: diffusion_policy.workspace.train_diffusion_unet_image_workspace_change.TrainDiffusionUnetImageWorkspace
+task_name: ${task.name}
+shape_meta: ${task.shape_meta}
+exp_name: "default"
+
+n_action_steps: 8
+
+policy:
+  _target_: diffusion_policy.policy.diffusion_unet_timm_policy.DiffusionUnetTimmPolicy
+
+  shape_meta: ${shape_meta}
+
+  noise_scheduler:
+    _target_: diffusers.DDIMScheduler # 指定噪声调度器的执行目标，这里使用的是 DDIM 调度器
+    num_train_timesteps: 50     # 指定训练过程中总的时步数
+    beta_start: 0.0001          # 指定噪声的初始值
+    beta_end: 0.02              # 指定噪声的最终值
+    # beta_schedule is important
+    # this is the best we found
+    beta_schedule: squaredcos_cap_v2        # 指定噪声调度器的类型，squaredcos_cap_v2 类型
+    clip_sample: True           # 指定是否对采样进行裁剪
+    set_alpha_to_one: True      # 指定是否将 alpha 设置为 1
+    steps_offset: 0             # 指定时步的偏移量
+    prediction_type: epsilon    # or sample  # 指定预测类型，这里使用的是 epsilon
+
+  obs_encoder:
+    _target_: diffusion_policy.model.vision.timm_obs_encoder.TimmObsEncoder
+    # 指定观测编码器的执行目标，TIMM 观测编码器
+    shape_meta: ${shape_meta}
+
+    ##### from scratch #####
+    # model_name: 'vit_base_patch16_224'
+    # model_name: 'resnet34'
+    # model_name: 'vit_tiny_patch16_224'
+    # model_name: 'efficientnet_b0'
+    # model_name: 'efficientnet_b3'
+    # pretrained: False
+    # frozen: False
+
+    ##### from scratch #####
+    # model_name: 'resnet34.a1_in1k'
+    model_name: 'vit_base_patch16_clip_224.openai'
+    # model_name: 'convnext_base.clip_laion2b_augreg_ft_in12k'
+    pretrained: True  # 指定是否使用预训练的模型
+    frozen: False     # 指定是否冻结模型参数
+
+    
+    global_pool: ''   # 指定全局池化的类型，这里使用的是空字符串，可能意味着不使用全局池化
+
+    # 'avg' or 'max' or 'soft_attention' or 'spatial_embedding' or 'transformer' or 'attention_pool_2d'
+    feature_aggregation: 'attention_pool_2d'  
+    # 指定特征聚合的类型，这里使用的是 attention_pool_2d
+    # feature_aggregation: null
+    position_encording: 'sinusoidal' # 'learnable' or 'sinusoidal'. it only works for transformer
+    # 指定位置编码的类型，这里使用的是正弦位置编码
+
+    # it only works for resnet. 32 (7x7) or 16 (14x14)
+    downsample_ratio: 32  # 指定下采样的比例
+    
+    # 指定用于预处理输入数据的transforms
+    # 在训练数据加载器和验证数据加载器中应用，以增强模型的泛化能力
+    # 在将数据传递给模型之前应用，以确保模型不会在训练过程中看到经过增强的数据
+    transforms:
+      - type: RandomCrop
+        ratio: 0.95     # 指定变换的类型为随机裁剪
+      # - _target_: torchvision.transforms.RandomRotation # 随机旋转输入图像
+      #   degrees:
+      #     - -5.0
+      #     - 5.0
+      #   expand: false
+      - _target_: torchvision.transforms.ColorJitter    # 随机调整输入图像的亮度、对比度、饱和度和色调
+        brightness: 0.3
+        contrast: 0.4
+        saturation: 0.5
+        hue: 0.08
+      # - _target_: torchvision.transforms.RandomPerspective  #  随机裁剪图像的一部分，并添加一个透视变换。透视变换会改变图像中对象的大小和形状，使其在不同的视角下看起来不同
+      #   distortion_scale: 0.5 # 指定透视变换的扭曲程度
+      #   p: 1.0                #  指定变换的概率，即随机应用变换的概率
+      # - _target_: torchvision.transforms.ElasticTransform     # 在图像上添加随机的弹性变形，使得图像中的对象在平移和缩放的同时发生扭曲
+      #   alpha: 50.0             # 指定弹性变形的强度
+      #   sigma: 5.0              # 指定弹性变形的标准差，影响变形的局部性
+      # - _target_: torchvision.transforms.RandomPerspective
+      #   distortion_scale: 0.5
+      #   p: 1.0
+      # - _target_: torchvision.transforms.ElasticTransform
+      #   alpha: 50.0
+      #   sigma: 5.0
+      # - _target_: torchvision.transforms.RandomCrop   # 随机裁剪输入图像的一部分
+      #   size: 192     # 指定随机裁剪的尺寸为 192x192
+      # 在 PyTorch 的 transforms 库中，您可以通过两种方式来定义一个变换
+      # 使用 type 关键字:
+      # - type: RandomCrop
+      # 这种方式更简洁，PyTorch 知道如何解析 type 关键字来识别对应的变换类型。
+      # 使用 _target_ 关键字:
+      # - _target_: torchvision.transforms.RandomCrop
+      # 这种方式更明确，它指定了变换的完整路径，包括模块名和类名。这有助于在不同的代码环境中明确地引用特定的变换类型。
+
+    use_group_norm: True    # 指定是否使用组归一化
+    share_rgb_model: False  # 指定是否共享 RGB 模型
+    imagenet_norm: True     # 指定是否使用 ImageNet 归一化
+
+  num_inference_steps: 16
+  obs_as_global_cond: True
+  diffusion_step_embed_dim: 128
+  down_dims: [256,512,1024]
+  kernel_size: 5
+  n_groups: 8
+  cond_predict_scale: True
+  input_pertub: 0.1 # reference: https://github.com/forever208/DDPM-IP
+
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+dataloader:
+  batch_size: 150 # 80
+  num_workers: 32 # 40
+  shuffle: True
+  pin_memory: True
+  persistent_workers: True
+
+val_dataloader:
+  batch_size: 150 # 80
+  num_workers: 32 # 40
+  shuffle: False
+  pin_memory: True
+  persistent_workers: True
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 3.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
+
+training:
+  device: "cuda:0"
+  seed: 42
+  debug: False
+  resume: True # 是否从之前的点训练 False True
+  checkpoint_path: data/outputs/2024.08.05/01.35.23_train_diffusion_unet_timm_umi
+
+  # get_checkpoint_path: data/outputs/2024.08.05/01.35.23_train_diffusion_unet_timm_umi/checkpoints/epoch=0230-train_loss=0.010.ckpt
+  # optimization
+  lr_scheduler: cosine
+  lr_warmup_steps: 2000
+  num_epochs: 2000
+  gradient_accumulate_every: 1
+  # EMA destroys performance when used with BatchNorm
+  # replace BatchNorm with GroupNorm.
+  use_ema: True
+  freeze_encoder: False
+  # training loop control
+  # in epochs
+  rollout_every: 20
+  checkpoint_every: 20
+  val_every: 1
+  sample_every: 5
+  # steps per epoch
+  max_train_steps: null
+  max_val_steps: null
+  # misc
+  tqdm_interval_sec: 1.0
+
+logging:
+  project: umi
+  resume: False
+  mode: online
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+  tags: ["${name}", "${task_name}", "${exp_name}"]
+  id: null
+  group: null
+
+checkpoint:
+  topk:
+    monitor_key: train_loss
+    mode: min
+    k: 20
+    format_str: 'epoch={epoch:04d}-train_loss={train_loss:.3f}.ckpt'
+  save_last_ckpt: True
+  save_last_snapshot: False
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  # data/outputs/2024.08.05/01.35.23_train_diffusion_unet_timm_umi
+  wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+
+hydra:
+  job:
+    override_dirname: ${name}
+  run:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  # data/outputs/2024.08.05/01.35.23_train_diffusion_unet_timm_umi
+  sweep:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  # data/outputs/2024.08.05/01.35.23_train_diffusion_unet_timm_umi
+    subdir: ${hydra.job.num}

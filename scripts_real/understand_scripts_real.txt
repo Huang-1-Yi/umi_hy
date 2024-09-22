@@ -1,0 +1,6 @@
+1.control_franka使用click库来处理命令行参数，numpy库来处理数值计算，scipy.spatial.transform库来处理空间变换,umi库来控制Franka机器人、SpaceMouse输入设备和WSG抓手
+2.
+3.
+4.
+5.
+6.

@@ -1,0 +1,353 @@
+python run_slam_pipeline.py umi/example_demo_session
+
+
+python scripts_slam_pipeline/07_generate_replay_buffer.py -o example_demo_session/place_wood_box_0830.zarr.zip example_demo_session
+accelerate launch --num_processes 2 train.py --config-name=train_diffusion_unet_umi_place_cup_workspace task.dataset_path=example_demo_session/place_wood_box_0830.zarr.zip
+
+
+
+conda activate umi
+HYDRA_FULL_ERROR=1 
+accelerate launch --num_processes 2 train.py --config-name=train_diffusion_unet_umi_place_cup_workspace_resume +checkpoint_path=data/outputs/2024.08.05/01.35.23_train_diffusion_unet_timm_umi task.dataset_path=example_demo_session/place_small_cup_0805.zarr.zip
+
+
+
+
+
+
+python eval_real_ur_left.py -rc=example/eval_robots_config_ur.yaml -i epoch=0380-train_loss=0.011.ckpt  -o data/place_wood3_box/0905
+
+
+
+python eval_real_ur_left.py -rc=example/eval_robots_config_ur.yaml -i place_small_cup_ckpt/epoch=0190-train_loss=0.011.ckpt -o data/place_cup_ckpt/eval_0731
+
+python run_slam_pipeline.py umi/example_demo_session
+python scripts_slam_pipeline/07_generate_replay_buffer.py -o example_demo_session/dataset.zarr.zip example_demo_session
+
+python eval_real_ur_left.py -rc=example/eval_robots_config_ur.yaml -i place_small_cup_ckpt/epoch=0190-train_loss=0.011.ckpt -o data/place_small_cup_ckpt/eval_0831
+
+
+
+
+
+
+
+
+ur
+conda activate umi
+sudo chmod 777 /dev/bus/usb/002/002
+
+python eval_real_franka_left.py -rc=example/eval_robots_config_franka.yaml -i place_small_cup_ckpt/epoch=0190-train_loss=0.011.ckpt -o data/place_cup_ckpt/eval_0731
+
+
+
+
+
+
+
+python eval_real_ur_left.py -rc=example/eval_robots_config_ur.yaml -i place_small_cup_ckpt/epoch=0190-train_loss=0.011.ckpt -o data/place_cup_ckpt/eval_0731
+
+python eval_real_ur_left.py -rc=example/eval_robots_config_ur.yaml -i place_cup_ckpt/epoch=0290-train_loss=0.011.ckpt -o data/place_cup_ckpt/eval_0731
+
+
+
+
+conda activate umi
+cd ~/umi
+python eval_real.py --robot_config=example/eval_robots_config_ur.yaml -i place_cup_ckpt/epoch=0290-train_loss=0.011.ckpt -o data/place_cup_ckpt/eval_0716
+
+python eval_real_ur.py -rc=example/eval_robots_config_ur.yaml -i place_cup_ckpt/epoch=0290-train_loss=0.011.ckpt -o data/place_cup_ckpt/eval_0731
+
+python eval_real_relman_left.py -rc=example/eval_robots_config.yaml -i place_cup_ckpt/epoch=0290-train_loss=0.011.ckpt -o data/place_cup_ckpt/eval_0822
+
+
+# 如果用户按下了退出键（q），则结束当前剧集，退出程序
+# 用户按下了切换到策略控制键（c），则切换到策略控制
+# 如果用户按下了下一集键（e），则移动到下一个剧集
+# 如果用户按下了上一集键（w），则移动到上一个剧集
+# 如果用户按下了移动机器人键（m），则为机器人夹爪设置一个路径点，夹爪将在给定时间到达指定宽度，需要位置
+# 如果用户按下了退格键，则弹出一个确认框，询问用户是否确定要删除当前剧集
+# 如果用户按下了切换控制机器人键（a），则设置控制机器人索引列表为所有机器人
+# 如果用户按下了选择机器人1键（1），则设置控制机器人索引列表只包含机器人1
+# 如果用户按下了选择机器人2键（2），则设置控制机器人索引列表只包含机器人2
+
+
+如果用户按下了开始策略控制键（s），则
+
+
+conda activate umi
+cd ~/umi
+python umi/real_world/launch_realman_interface_server.py
+
+
+conda activate umi
+cd ~/umi
+python eval_real_relman_left.py --robot_config=example/eval_robots_config.yaml -i place_cup_ckpt/latest.ckpt -o data/place_cup_ckpt/eval_0716
+
+
+
+
+python eval_real_relman_left.py --robot_config=example/eval_robots_config.yaml -i latest.ckpt -o data/eval_0614
+
+
+相机延迟测量0.14
+python scripts/calibrate_uvc_camera_latency.py
+机械臂延迟测量
+python umi/real_world/launch_realman_interface_server.py
+python scripts/calibrate_robot_latency.py 
+
+
+
+python eval_real_relman.py --robot_config=example/eval_robots_config.yaml -i epoch=0100-train_loss=0.019.ckpt -o data/eval_0516
+
+
+python umi/real_world/launch_realman_interface_server.py
+
+单手
+python eval_real_left.py  + -i cup_wild_vit_l.ckpt -o data/eval_cup_wild_example
+
+
+
+python scripts_real/eval_real_umi.py -i data/outputs/2023.10.26/02.25.30_train_diffusion_unet_timm_umi/checkpoints/latest.ckpt -o data_local/cup_test_data
+python scripts_real/eval_real_umi.py -i data/outputs/2023.10.26/02.25.30_train_diffusion_unet_timm_umi/checkpoints/latest.ckpt -o data_local/cup_test_data
+
+
+
+
+python scripts_real/eval_real_umi.py -i data/outputs/2023.10.26/02.25.30_train_diffusion_unet_timm_umi/checkpoints/latest.ckpt -o data_local/cup_test_data
+
+
+
+hy
+python eval_real.py --robot_config=example/eval_robots_config.yaml -i cup_wild_vit_l.ckpt -o data/eval_cup_wild_example
+
+
+
+
+
+基础环境ubuntu20.04.06，内和5.15.0.100.geneic
+ros-noetic
+nvidia535
+cuda11.8
+
+
+wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
+sudo sh cuda_11.8.0_520.61.05_linux.run
+
+wget https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_530.30.02_linux.run
+sudo sh cuda_12.1.1_530.30.02_linux.run
+一键安装ros+配置环境
+sudo apt-get update
+sudo apt-get upgrade
+wget http://fishros.com/install -O fishros && . fishros 
+选择：1+2+7
+
+只能在/etc/apt/sources.list中添加一种类型的源，比如只添加阿里源或者清华源，别把两种都搞进去，会出错的！同理，也别跟其他的源混在一起搞进去！
+
+一、conda+docker
+1.1安装
+cd /opt
+sudo wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh
+sudo bash Miniconda3-latest-Linux-x86_64.sh
+备注：选项：[/root/miniconda3] >>> /opt/miniconda3
+export PATH="/opt/miniconda3/bin:$PATH"
+conda init
+1.2修改.condarc
+{}
+
+channels:
+  - defaults
+custom_channels:
+  conda-forge: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  msys2: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  bioconda: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  menpo: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  pytorch: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  simpleitk: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+default_channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2
+show_channel_urls: True
+
+1.3 docker
+
+https://docs.docker.com/engine/install/ubuntu/
+
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo docker run hello-world
+
+https://docs.docker.com/engine/install/linux-postinstall/
+
+sudo groupadd docker
+sudo usermod -aG docker $USER
+
+newgrp docker
+docker run hello-world
+
+自动启动
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
+不自动启动
+sudo systemctl disable docker.service
+sudo systemctl disable containerd.service
+
+二、安装umi
+sudo apt install -y libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf
+2.1创建环境
+cd universal_manipulation_interface/
+sudo chown -R robot /opt/miniconda3
+conda install mamba -n base -c conda-forge
+备注：或者用conda install -n base conda-forge::mamba
+mamba env create -f conda_environment.yaml
+2.2安装pip依赖（前面没安装）
+conda activate umi
+sudo apt install libspnav-dev spacenavd
+systemctl start spacenavd
+修改pip.conf
+	[global]
+	index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+	timeout = 120
+然后，创建requirements.txt如下：
+	ray[default]==2.8.0
+	threadpoolctl==3.2
+	v4l2py==2.2
+	ur-rtde==1.5.6
+	# requires sudo apt install libspnav-dev spacenavd; systemctl start spacenavd
+	spnav @ https://github.com/cheng-chi/spnav/archive/c1c938ebe3cc542db4685e0d13850ff1abfdb943.tar.gz
+	atomics==1.0.2
+	pynput==1.7.6
+	fastcrc==0.2
+	imagecodecs==2023.9.18
+	robomimic==0.2.0
+	# requires mujoco py dependencies libosmesa6-dev libgl1-mesa-glx libglfw3 patchelf
+	free-mujoco-py==2.1.6
+	robosuite @ https://github.com/cheng-chi/robosuite/archive/3f2c3116f1c0a1916e94bfa28da4d055927d1ab3.tar.gz
+	# implicitly depend on conda package exiftool
+	PyExifTool==0.5
+
+pip install -r requirements.txt
+
+pip install zerorpc
+
+三、创建文件夹 
+～/universal_manipulation_interface下创建文件夹 example_demo_session
+mkdir example_demo_session
+到网站https://real.stanford.edu/umi/data/example_demo_session/下载各大视频
+
+
+sudo apt update
+sudo apt install docker.io
+
+sudo groupadd docker
+sudo usermod -aG docker $USER
+sudo service docker restart
+newgrp - docker
+
+
+cd ~/universal_manipulation_interface
+conda activate umi
+python run_slam_pipeline.py example_demo_session
+
+
+
+
+
+四、使用
+根据aruco_config.yaml完成标定
+更新gopro_intrinsics_2_7k.json
+
+
+
+
+
+4.1 数据处理
+数据自动下载后，需要放到前一个目录下
+--universal_manipulation_interface
+  ……
+  --example_demo_session
+    --raw_videos
+    --demos
+  ……
+其中raw_videos存放鱼眼视频
+4.1.1数据可视化，可打开查看（录制的视频转换为视频数据+imu）
+python run_slam_pipeline.py umi/example_demo_session
+输入参数为视频数据的目录存放位置
+处理数据通常放于raw_videos
+4.1.2数据集制作（dataset.zarr.zip）
+eg.
+python scripts_slam_pipeline/07_generate_replay_buffer.py -o example_demo_session/dataset.zarr.zip example_demo_session
+使用scripts_slam_pipeline/07_generate_replay_buffer.py制作数据集，定义数据集存放位置：-o example_demo_session/dataset.zarr.zip example_demo_session
+
+python scripts_slam_pipeline/07_generate_replay_buffer.py -o example_demo_session/milk.zarr.zip example_demo_session
+
+
+4.2 机械臂+机械爪控制，实现杯子放置
+sudo chmod -R 777 /dev/bus/usb
+python eval_real.py --robot_config=example/eval_robots_config.yaml -i cup_wild_vit_l_1img.ckpt -o data/eval_cup_wild_example
+脚本启动后，使用空格鼠标控制机器人和抓手（空格鼠标按钮）。按 可启动策略。按下停止。CS
+
+如果一切设置正确，您的机器人应该能够旋转杯子并将其放在碟子上的任何地方 🎉
+
+4.3 单GPU训练
+4.3.1训练
+eg.
+python train.py --config-name=train_diffusion_unet_timm_umi_workspace task.dataset_path=cup_in_the_wild.zarr.zip
+
+python train.py --config-name=train_diffusion_unet_timm_umi_workspace task.dataset_path=milk.zarr.zip
+
+报错——手动下载模型，并修改代码：
+model/vision/timm_obs_encoder.py中
+model = timm.create_model(
+    model_name=model_name,
+    pretrained=pretrained,
+    global_pool=global_pool, # '' means no pooling
+    num_classes=0            # remove classification layer
+)
+改成：
+model = timm.create_model(
+    model_name=model_name,
+    pretrained=True,
+    pretrained_cfg_overlay=dict(file='/home/franka/universal_manipulation_interface_3/timm/vit_base_patch16_clip_224.openai'),
+    global_pool=global_pool, # '' means no pooling
+    num_classes=0            # remove classification layer
+)
+
+4.3.2 可视化
+pip install wandb
+在官网注册：
+复制token，
+wandb login
+根据提示输入token
+
+或者修改代码：
+# configure logging
+wandb_run = wandb.init(
+    dir=str(self.output_dir),
+    config=OmegaConf.to_container(cfg, resolve=True),
+    **cfg.logging
+)
+wandb.config.update(
+    {
+        "output_dir": self.output_dir,
+    }
+)
+
+
+
+
+1.相机标定
+pip install qrcode
+
+

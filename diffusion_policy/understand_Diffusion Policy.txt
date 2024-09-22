@@ -1,0 +1,24 @@
+学习Diffusion Policy，并学会如何调试
+
+Diffusion Policy—基于扩散模型的机器人动作生成策略 https://zhuanlan.zhihu.com/p/670555655
+快速而自信地教会机器人新的灵巧技能。这一进展显著提高了机器人的效用，是构建机器人“大行为模型（LBMs）”迈出的一步，类似于最近彻底改变了对话人工智能的大型语言模型（LLMs）。
+哥伦比亚大学宋舒然团队和MIT教授Russ Tedrake带领的丰田机器人研究院共同创作。论文的一作迟宬目前是哥伦比亚大学的计算机科学博士生，在宋舒然的指导下做机器人操纵和感知相关的研究。
+
+从最简单的形式来看，从演示中学习策略可以被表述为学习将观察映射到动作的监督回归任务。然而，在实践中，预测机器人动作有一系列挑战，比如存在多模态分布、时序相关性和训练稳定性的要求。
+
+1.codecs：numcodecs实现数据存储和通信应用程序的缓冲区压缩和转换编解码器
+https://numcodecs.readthedocs.io/en/stable/
+https://github.com/zarr-developers/numcodecs
+
+2.common
+通用代码
+
+3.config
+
+4.
+5.
+6.
+7.
+
+
+
