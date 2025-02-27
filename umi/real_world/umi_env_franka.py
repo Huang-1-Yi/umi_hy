@@ -20,6 +20,7 @@ from umi.common.usb_util                                import reset_all_elgato_
 from umi.common.pose_util                               import pose_to_pos_rot
 from umi.common.interpolation_util                      import get_interp1d, PoseInterpolator
 
+
 # 定义UmiEnv类及其构造函数，接收多个参数用于配置环境
 class UmiEnv:
     def __init__(self, 
@@ -263,18 +264,19 @@ class UmiEnv:
         if robot_type.startswith('realman'):
             print("6.robot == RealmanInterpolationController")  
             robot = RealmanInterpolationController(
-                shm_manager = shm_manager,
-                frequency = 500,
-                robot_ip = robot_ip,
-                # joints_init = rc['j_init'],
-                joints_init_speed = 0.3,# rc['j_init_speed']
-                soft_real_time=False,
-                verbose = False,
-                receive_keys=None,
-                receive_latency = robot_obs_latency
+                shm_manager         = shm_manager,
+                frequency           = 500,
+                robot_ip            = robot_ip,
+                # joints_init        = rc['j_init'],
+                joints_init_speed   = 0.3,# rc['j_init_speed']
+                soft_real_time      = False,
+                verbose             = False,
+                receive_keys        = None,
+                receive_latency     = robot_obs_latency
             )
             # print("this_robot ==", this_robot)
         elif robot_type.startswith('franka'):
+            print("6.robot == FrankaInterpolationController")  
             robot = FrankaInterpolationController(
                 shm_manager=shm_manager,
                 robot_ip=robot_ip,
@@ -285,6 +287,7 @@ class UmiEnv:
                 receive_latency=robot_obs_latency
             )
         elif robot_type.startswith('ur'):
+            print("6.robot == URInterpolationController")  
             robot = RTDEInterpolationController(    # 创建一个RTDEInterpolationController对象，传入共享内存管理器、机器人IP、频率、前瞻时间、增益、最大速度、TCP偏移、负载信息等参数
                 shm_manager=shm_manager,
                 robot_ip=robot_ip,
@@ -305,9 +308,10 @@ class UmiEnv:
                 receive_latency=robot_obs_latency
                 )
         else:
+            print("机械臂类型有错")  
             raise NotImplementedError() # 抛出一个NotImplementedError异常，表示不支持这种类型的机器人
     
-        # 抓手部分
+        # 抓手部分，从这里替换
         gripper = WSGController(
             shm_manager=shm_manager,
             hostname=gripper_ip,

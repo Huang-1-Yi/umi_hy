@@ -33,7 +33,7 @@ class UmiEnv:
             gripper_ip  = '192.168.1.20',# ？
             gripper_port=1000,          # ？
             # 环境参数 env params
-            robot_type='realman',#      robot_type='ur5',# ？
+            robot_type='franka',#      robot_type='ur5',# ？
             frequency = 20,
             # obs
             obs_image_resolution=(224,224),
@@ -52,7 +52,7 @@ class UmiEnv:
             camera_obs_latency          =0.125,# 0.125  ---0.14
             robot_obs_latency           =0.0001,
             gripper_obs_latency         =0.01,
-            robot_action_latency        =0.082,
+            robot_action_latency        =0.1,
             gripper_action_latency      =0.1,
             # all in steps (relative to frequency)
             camera_down_sample_steps    =1,
@@ -67,7 +67,7 @@ class UmiEnv:
             max_pos_speed               =0.01,#0.25/0.1=2，太高了 umi用的0.5  0.1
             max_rot_speed               =0.005,#0.6/0.1=6，太高了   umi用的1.5  0.5
             # robot
-            tcp_offset                  =0.235, # ur用
+            tcp_offset                  =0.21, # franka用？？？？？？？？？？？？？？？？？？？？
             init_joints                 =False,
             # 视觉参数 vis params
             enable_multi_cam_vis        =True,
@@ -128,7 +128,7 @@ class UmiEnv:
         #     print("过滤后, idx == ",idx, "path == ",path)
         for path in v4l_paths:
             if 'Elgato' in path:
-                print("5.1 Elgato init")  
+                print("5.1 Elgato init for franka")  
                 res = (1920, 1080)
                 fps = 60
                 buf = 3 # 缓冲区
@@ -273,17 +273,25 @@ class UmiEnv:
                 receive_keys=None,
                 receive_latency = robot_obs_latency
             )
-            # print("this_robot ==", this_robot)
+            # print("this_robot ==", robot)
+
+
+
+
+
+
         elif robot_type.startswith('franka'):
             robot = FrankaInterpolationController(
                 shm_manager=shm_manager,
                 robot_ip=robot_ip,
-                frequency=200,
+                frequency=200,  #1000？
                 Kx_scale=1.0,
                 Kxd_scale=np.array([2.0,1.5,2.0,1.0,1.0,1.0]),
                 verbose=False,
                 receive_latency=robot_obs_latency
             )
+            # print("this_robot ==", robot)
+
         elif robot_type.startswith('ur'):
             robot = RTDEInterpolationController(    # 创建一个RTDEInterpolationController对象，传入共享内存管理器、机器人IP、频率、前瞻时间、增益、最大速度、TCP偏移、负载信息等参数
                 shm_manager=shm_manager,
@@ -363,9 +371,13 @@ class UmiEnv:
     # 所有相关的设备（相机、机器人和夹爪）是否都准备好开始操作
     def is_ready(self):
         # return self.camera.is_ready and self.robot.is_ready
+        
         ready_flag_camera = self.camera.is_ready
+        # print("ready_flag_camera == ",ready_flag_camera)
         ready_flag_robot = ready_flag_camera and self.robot.is_ready
+        # print("ready_flag_robot == ",ready_flag_robot)
         ready_flag = ready_flag_robot and self.gripper.is_ready
+        print("ready_flag == ",ready_flag)
         return ready_flag
         # 抓手部分
         # return self.camera.is_ready and self.robot.is_ready and self.gripper.is_ready
@@ -400,7 +412,7 @@ class UmiEnv:
         self.robot.start_wait()
         if self.multi_cam_vis is not None:
             self.multi_cam_vis.start_wait()
-    # 等待所有相关的设备停止完成
+    # 等待所有相关的设备停止完成 
     def stop_wait(self):
         self.robot.stop_wait()
         # 抓手部分

@@ -101,11 +101,11 @@ def solve_sphere_collision(ee_poses, robots_config):
                 ee_poses[this_robot_idx][:6] = mat_to_pose(this_sphere_mat_global @ np.linalg.inv(this_sphere_mat_local))
                 ee_poses[that_robot_idx][:6] = mat_to_pose(np.linalg.inv(this_that_mat) @ that_sphere_mat_global @ np.linalg.inv(that_sphere_mat_local))
 
-
-loop = asyncio.get_event_loop()
-async def save_pose_to_file(data, filename):
-    async with aiofiles.open(filename, 'a') as file:
-        await file.write(json.dumps(data.tolist()) + '\n')
+# 存储函数
+# loop = asyncio.get_event_loop()
+# async def save_pose_to_file(data, filename):
+#     async with aiofiles.open(filename, 'a') as file:
+#         await file.write(json.dumps(data.tolist()) + '\n')
 
 @click.command()
 @click.option('--input', '-i', required=True, help='Path to checkpoint')
@@ -170,15 +170,14 @@ def main(input, output, robot_config,
             out_fov=sim_fov
         )
 
-    print("1.创建文件存储数据:", steps_per_inference)
 
-    # 存储函数
-    current_time = datetime.datetime.now()
-    # 格式化时间：例如，年_月_日_时_分
-    formatted_time = current_time.strftime('%Y_%m_%d_%H_%M')
-    # 修改文件名
-    file_name1 = 'exec_actions_human_joint{}.json'.format(formatted_time)
-    file_name2 = 'exec_actions_policy_joint{}.json'.format(formatted_time)
+    # # 文件存储
+    # print("1.创建文件存储数据:", steps_per_inference)
+    # current_time = datetime.datetime.now()# 存储函数
+    # formatted_time = current_time.strftime('%Y_%m_%d_%H_%M')# 格式化时间：例如，年_月_日_时_分
+    # # 修改文件名
+    # file_name1 = 'exec_actions_human_joint{}.json'.format(formatted_time)
+    # file_name2 = 'exec_actions_policy_joint{}.json'.format(formatted_time)
 
     print("steps_per_inference:", steps_per_inference)
     with SharedMemoryManager() as shm_manager:
@@ -274,7 +273,7 @@ def main(input, output, robot_config,
             device = torch.device('cuda')
             policy.eval().to(device)
 
-            print("Warming up policy inference")
+            print("预热Warming up policy inference")
             obs = env.get_obs()
             episode_start_pose = list()
             pose = np.concatenate([                                 # 构建机器人的姿势数据(末端执行器位置, 末端执行器旋转轴角度)
@@ -313,7 +312,8 @@ def main(input, output, robot_config,
                 print("Human in control!")
                 # 获取目标姿态
                 robot_states = env.get_robot_state()                    # 从环境中获取机器人的所有状态
-                target_pose = np.asarray(robot_states['TargetTCPPose']) # 机器人的目标姿态
+                # target_pose = np.asarray(robot_states['TargetTCPPose']) # 机器人的目标姿态
+                target_pose = np.asarray(robot_states['ActualTCPPose']) # 机器人的目标姿态
                 # target_pose = np.stack([rs['TargetTCPPose'] for rs in robot_states])
                 # target_pose = robot_states['TargetTCPPose'] # 获取目标姿势
                 # print("state['TargetTCPPose'] == ", target_pose)

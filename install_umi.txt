@@ -1,15 +1,19 @@
-python run_slam_pipeline.py umi/example_demo_session
+conda activate umi
 
+python run_slam_pipeline.py umi/example_demo_session
 
 python scripts_slam_pipeline/07_generate_replay_buffer.py -o example_demo_session/place_wood_box_0830.zarr.zip example_demo_session
 accelerate launch --num_processes 2 train.py --config-name=train_diffusion_unet_umi_place_cup_workspace task.dataset_path=example_demo_session/place_wood_box_0830.zarr.zip
 
 
 
-conda activate umi
+
 HYDRA_FULL_ERROR=1 
 accelerate launch --num_processes 2 train.py --config-name=train_diffusion_unet_umi_place_cup_workspace_resume +checkpoint_path=data/outputs/2024.08.05/01.35.23_train_diffusion_unet_timm_umi task.dataset_path=example_demo_session/place_small_cup_0805.zarr.zip
 
+
+测试
+python eval_real_franka_left.py -rc=example/eval_robots_config_franka.yaml -i model/wood1_tf/epoch=0180-train_loss=0.012.ckpt  -o data/franka_test/1011
 
 
 

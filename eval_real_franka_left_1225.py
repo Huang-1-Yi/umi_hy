@@ -24,7 +24,6 @@ import time
 import datetime
 import aiofiles
 import asyncio
-
 import av
 import click
 import cv2
@@ -44,7 +43,7 @@ from diffusion_policy.workspace.base_workspace  import BaseWorkspace
 from umi.common.cv_util                         import parse_fisheye_intrinsics,FisheyeRectConverter
 from umi.common.precise_sleep                   import precise_wait
 # from umi.real_world.bimanual_umi_env            import BimanualUmiEnv
-from umi.real_world.umi_env_ur                  import UmiEnv
+from umi.real_world.umi_env_franka              import UmiEnv
 from umi.real_world.keystroke_counter           import KeystrokeCounter, Key, KeyCode
 from umi.real_world.real_inference_util         import (get_real_obs_dict,
                                                         get_real_obs_resolution,
@@ -101,12 +100,11 @@ def solve_sphere_collision(ee_poses, robots_config):
                 ee_poses[this_robot_idx][:6] = mat_to_pose(this_sphere_mat_global @ np.linalg.inv(this_sphere_mat_local))
                 ee_poses[that_robot_idx][:6] = mat_to_pose(np.linalg.inv(this_that_mat) @ that_sphere_mat_global @ np.linalg.inv(that_sphere_mat_local))
 
-# 存储函数
-# loop = asyncio.get_event_loop()
-# async def save_pose_to_file(data, filename):
-#     async with aiofiles.open(filename, 'a') as file:
-#         await file.write(json.dumps(data.tolist()) + '\n')
 
+loop = asyncio.get_event_loop()
+async def save_pose_to_file(data, filename):
+    async with aiofiles.open(filename, 'a') as file:
+        await file.write(json.dumps(data.tolist()) + '\n')
 @click.command()
 @click.option('--input', '-i', required=True, help='Path to checkpoint')
 @click.option('--output', '-o', required=True, help='Directory to save recording')
@@ -119,28 +117,37 @@ def solve_sphere_collision(ee_poses, robots_config):
 @click.option('--init_joints', '-j', is_flag=True, default=False, help="Whether to initialize robot joint configuration in the beginning.")
 @click.option('--steps_per_inference', '-si', default=6, type=int, help="Action horizon for inference.")
 @click.option('--max_duration', '-md', default=2000000, help='Max duration for each epoch in seconds.')
-@click.option('--frequency', '-f', default=3, type=float, help="Control frequency in Hz.")
+@click.option('--frequency', '-f', default=10, type=float, help="2-10 Control frequency in Hz.")
 @click.option('--command_latency', '-cl', default=0.01, type=float, help="Latency between receiving SapceMouse command to executing on Robot in Sec.")
 @click.option('-nm', '--no_mirror', is_flag=True, default=False)
 @click.option('-sf', '--sim_fov', type=float, default=None)
 @click.option('-ci', '--camera_intrinsics', type=str, default=None)
 @click.option('--mirror_swap', is_flag=True, default=False)
-def main(input, output, robot_config, 
-    match_dataset, match_episode, match_camera,
-    camera_reorder,
-    vis_camera_idx, init_joints, 
-    steps_per_inference, max_duration,
-    frequency, command_latency, 
-    no_mirror, sim_fov, camera_intrinsics, mirror_swap):
-    max_gripper_width = 0.115
-    gripper_speed = 0.2
+@click.option('--max_gripper_width', default=0.115, type=float, help="抓手最大宽度")
+@click.option('--gripper_speed', default=0.2, type=float, help="抓手最大速度")
+def main(input,
+         output, 
+         robot_config, 
+         match_dataset, 
+         match_episode, 
+         match_camera,
+         camera_reorder,
+         vis_camera_idx, 
+         init_joints, 
+         steps_per_inference, 
+         max_duration,
+         frequency, 
+         command_latency, 
+         no_mirror, 
+         sim_fov, 
+         camera_intrinsics, 
+         mirror_swap, max_gripper_width, gripper_speed):
     
     # load robot config file
     robot_config_data = yaml.safe_load(open(os.path.expanduser(robot_config), 'r'))
     
     # load left-right robot relative transform
-    tx_left_right = np.array(robot_config_data['tx_left_right'])
-    tx_robot1_robot0 = tx_left_right
+    tx_robot1_robot0 = np.array(robot_config_data['tx_left_right'])
     
     robots_config = robot_config_data['robots']
     grippers_config = robot_config_data['grippers']
@@ -149,6 +156,7 @@ def main(input, output, robot_config,
     ckpt_path = input
     if not ckpt_path.endswith('.ckpt'):
         ckpt_path = os.path.join(ckpt_path, 'checkpoints', 'latest.ckpt')
+    
     payload = torch.load(open(ckpt_path, 'rb'), map_location='cpu', pickle_module=dill)
     cfg = payload['cfg']
     print("model_name:", cfg.policy.obs_encoder.model_name)
@@ -158,6 +166,7 @@ def main(input, output, robot_config,
     dt = 1/frequency
 
     obs_res = get_real_obs_resolution(cfg.task.shape_meta)
+    print("0.观测图像维度:", obs_res)
     # load fisheye converter
     fisheye_converter = None
     if sim_fov is not None:
@@ -170,14 +179,14 @@ def main(input, output, robot_config,
             out_fov=sim_fov
         )
 
-
-    # # 文件存储
-    # print("1.创建文件存储数据:", steps_per_inference)
-    # current_time = datetime.datetime.now()# 存储函数
-    # formatted_time = current_time.strftime('%Y_%m_%d_%H_%M')# 格式化时间：例如，年_月_日_时_分
-    # # 修改文件名
-    # file_name1 = 'exec_actions_human_joint{}.json'.format(formatted_time)
-    # file_name2 = 'exec_actions_policy_joint{}.json'.format(formatted_time)
+    print("1.创建文件存储数据:", steps_per_inference)
+    # 存储函数
+    current_time = datetime.datetime.now()
+    # 格式化时间：例如，年_月_日_时_分
+    formatted_time = current_time.strftime('%Y_%m_%d_%H_%M')
+    # 修改文件名
+    file_name1 = 'exec_actions_human_joint{}.json'.format(formatted_time)
+    file_name2 = 'exec_actions_policy_joint{}.json'.format(formatted_time)
 
     print("steps_per_inference:", steps_per_inference)
     with SharedMemoryManager() as shm_manager:
@@ -253,6 +262,7 @@ def main(input, output, robot_config,
                                 break
                         episode_first_frame_map[episode_idx] = img
             print(f"5.加载初始框架给XX集 Loaded initial frame for {len(episode_first_frame_map)} episodes")
+            
 
             # 创建模型 # have to be done after fork to prevent duplicating CUDA context with ffmpeg nvenc
             cls = hydra.utils.get_class(cfg._target_)               # 使用Hydra工具从配置对象cfg中获取目标类（模型类）
@@ -273,7 +283,7 @@ def main(input, output, robot_config,
             device = torch.device('cuda')
             policy.eval().to(device)
 
-            print("预热Warming up policy inference")
+            print("Warming up policy inference")
             obs = env.get_obs()
             episode_start_pose = list()
             pose = np.concatenate([                                 # 构建机器人的姿势数据(末端执行器位置, 末端执行器旋转轴角度)
@@ -312,7 +322,8 @@ def main(input, output, robot_config,
                 print("Human in control!")
                 # 获取目标姿态
                 robot_states = env.get_robot_state()                    # 从环境中获取机器人的所有状态
-                target_pose = np.asarray(robot_states['TargetTCPPose']) # 机器人的目标姿态
+                # target_pose = np.asarray(robot_states['TargetTCPPose']) # 机器人的目标姿态
+                target_pose = np.asarray(robot_states['ActualTCPPose'])
                 # target_pose = np.stack([rs['TargetTCPPose'] for rs in robot_states])
                 # target_pose = robot_states['TargetTCPPose'] # 获取目标姿势
                 # print("state['TargetTCPPose'] == ", target_pose)
@@ -442,7 +453,7 @@ def main(input, output, robot_config,
                     # 5.1 获取遥操作命令
                     sm_state = sm.get_motion_state_transformed()        # 获取SpaceMouse的运动状态
                     # print(sm_state)
-                    # print("sm_state:{}".format(sm_state))               # 打印运动状态
+                    print("sm_state:{}".format(sm_state))               # 打印运动状态
                     # dpos = sm_state[:3] * (0.5 / frequency)
                     # drot_xyz = sm_state[3:] * (1.5 / frequency)
                     dpos = sm_state[:3] * (env.max_pos_speed / frequency)       # 计算位置增量
@@ -454,8 +465,7 @@ def main(input, output, robot_config,
                     drot = st.Rotation.from_euler('xyz', drot_xyz)      # 将旋转速度转换为一个旋转对象
                     # 更新目标姿态，根据SpaceMouse的输入和当前控制机器人列表
                     target_pose[:3] += dpos
-                    target_pose[3:] = (drot * st.Rotation.from_rotvec(
-                        target_pose[3:])).as_rotvec()
+                    target_pose[3:] = (drot * st.Rotation.from_rotvec(target_pose[3:])).as_rotvec()
                     dpos = 0                                            # 重置平移速度变量
                     # 如果SpaceMouse的第一个按钮被按下，则设置夹爪的平移速度为负值，表示夹爪关闭
                     if sm.is_button_pressed(0):                     # close gripper
@@ -482,8 +492,8 @@ def main(input, output, robot_config,
                     # target_pose[:2] = np.clip(target_pose[:2], [0.25, -0.45], [0.77, 0.40]) # 裁剪XY轴位置
                     # execute actions
                     # print("env.exec_actions用7维数组action:{}".format(action))           # 打印action
-                    # print("env.exec_actions用gripper:{}".format(action[6]))           # 打印gripper
-                    # loop.run_until_complete(save_pose_to_file(action, file_name1))
+                    print("env.exec_actions用gripper:{}".format(action[6]))           # 打印gripper
+                    loop.run_until_complete(save_pose_to_file(action, file_name1))
     
                     # 5.3 执行遥操作命令
                     env.exec_actions(                               # 执行动作
@@ -586,8 +596,8 @@ def main(input, output, robot_config,
                             action_timestamps = action_timestamps[is_new]
                         # execute actions
                         # print("env.exec_actions_this_target_poses.shape[1]:{}".format(this_target_poses.shape[1]))           # 打印max_speed
-                        # loop.run_until_complete(save_pose_to_file(action, file_name2))
-
+                        loop.run_until_complete(save_pose_to_file(action, file_name2))
+    
                         print("env.exec_actions用gripper:{}".format(this_target_poses[6]))           # 打印gripper
                         env.exec_actions(                                                   # 执行所有机器人动作，并将动作的时间戳设置为实际的时间点 execute actions
                             actions=this_target_poses,

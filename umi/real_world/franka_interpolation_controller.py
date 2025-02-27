@@ -39,6 +39,7 @@ class FrankaInterface:
     def __init__(self, ip='192.168.1.167', port=4242): # 172.16.0.3 连接到Franka机器人服务器的指定IP地址和端口号
         self.server = zerorpc.Client(heartbeat=20)
         self.server.connect(f"tcp://{ip}:{port}")
+        print('server.connect(f"tcp://{ip}:{port}")')
                 # self.server.connect(f"tcp://{ip}:{port}")
         # self.server.connect("tcp://127.0.0.1:5555")
         # self.server.connect("tcp://192.168.1.111:5555")

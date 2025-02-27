@@ -4,9 +4,9 @@
   "robots": [
     {
       "robot_type": "franka",       # "robot_type": "ur5e",
-      "robot_ip": "192.168.1.167",    # "robot_ip": "192.168.0.8",
+      "robot_ip": "192.168.1.30",    # "robot_ip": "192.168.0.8",
       "robot_obs_latency": 0.0001,  # 机器人感知延迟 
-      "robot_action_latency": 0.1,  # 机器人动作延迟
+      "robot_action_latency": 0.082,  # 机器人动作延迟 0.1
       "tcp_offset": 0.235,          # 工具中心点（TCP）的偏移量
       # table height for finger-table collision avoidance
       # -inf to disable
@@ -23,7 +23,7 @@
       "gripper_ip": "192.168.1.20", # 夹爪的IP地址 127.0.0.1
       "gripper_port": 1000,         # 夹爪的端口号
       "gripper_obs_latency": 0.01,  # 夹爪感知延迟
-      "gripper_action_latency": 0.1 # 夹爪动作延迟
+      "gripper_action_latency": 0.104 # 夹爪动作延迟 0.1
     },
     # {
     #   "gripper_ip": "192.168.0.27",
