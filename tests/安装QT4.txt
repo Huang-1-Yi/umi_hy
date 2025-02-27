@@ -1,0 +1,19 @@
+安装QT4
+sudo apt-get install qt4*
+sudo apt-get install qtcreator
+ 
+下面主要是安装QT5
+sudo apt-get update
+sudo apt-get install build-essential
+sudo apt-get install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
+sudo apt-get install qtcreator
+sudo apt-get install qt5*
+ 
+sudo apt-get install libfontconfig1 
+sudo apt-get install mesa-common-dev 
+sudo apt-get install libglu1-mesa-dev -y 
+sudo apt-get upgrade
+ 
+可能遇到的问题
+ubuntu安装qt时编译出现cstddef:50:10: fatal error: 'stddef.h' file not found
+sudo apt-get install libclang-common-8-dev，这条命令完美解决

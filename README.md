@@ -52,7 +52,7 @@ Download example data
 
 Run SLAM pipeline
 ```console
-(umi)$ python run_slam_pipeline.py example_demo_session
+(umi)$ python run_slam_pipeline.py umi/example_demo_session
 
 ...
 Found following cameras:

@@ -1,13 +1,23 @@
+conda activate robodiff
 conda activate umi
 
+
+cd diffusion_policy
+python eval_real_robot.py -i data/pusht/checkpoints/latest.ckpt  -o data/eval_pusht_real --robot_ip 172.16.0.11
+
+
+
+export QT_QPA_PLATFORM=xcb
+
 python run_slam_pipeline.py umi/example_demo_session
+
 
 python scripts_slam_pipeline/07_generate_replay_buffer.py -o example_demo_session/place_wood_box_0830.zarr.zip example_demo_session
 accelerate launch --num_processes 2 train.py --config-name=train_diffusion_unet_umi_place_cup_workspace task.dataset_path=example_demo_session/place_wood_box_0830.zarr.zip
 
 
 
-
+conda activate umi
 HYDRA_FULL_ERROR=1 
 accelerate launch --num_processes 2 train.py --config-name=train_diffusion_unet_umi_place_cup_workspace_resume +checkpoint_path=data/outputs/2024.08.05/01.35.23_train_diffusion_unet_timm_umi task.dataset_path=example_demo_session/place_small_cup_0805.zarr.zip
 
@@ -39,10 +49,11 @@ python eval_real_ur_left.py -rc=example/eval_robots_config_ur.yaml -i place_smal
 
 ur
 conda activate umi
-sudo chmod 777 /dev/bus/usb/002/002
+ sudo chmod 777 /dev/bus/usb/002/002
 
 python eval_real_franka_left.py -rc=example/eval_robots_config_franka.yaml -i place_small_cup_ckpt/epoch=0190-train_loss=0.011.ckpt -o data/place_cup_ckpt/eval_0731
 
+192.168.1.13
 
 
 
@@ -245,6 +256,7 @@ pip install -r requirements.txt
 
 pip install zerorpc
 
+
 三、创建文件夹 
 ～/universal_manipulation_interface下创建文件夹 example_demo_session
 mkdir example_demo_session
@@ -286,6 +298,7 @@ python run_slam_pipeline.py example_demo_session
   ……
 其中raw_videos存放鱼眼视频
 4.1.1数据可视化，可打开查看（录制的视频转换为视频数据+imu）
+conda activate umi
 python run_slam_pipeline.py umi/example_demo_session
 输入参数为视频数据的目录存放位置
 处理数据通常放于raw_videos

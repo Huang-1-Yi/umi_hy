@@ -113,6 +113,7 @@ def main(tag_detection, csv_trajectory, output, tag_id, keyframe_only):
     print(f"Saved result to {output}")
 
 
+
 # %%
 if __name__ == "__main__":
     main()

@@ -24,8 +24,8 @@ from tqdm import tqdm
 # 使用click模块定义命令行接口。
 @click.command()
 @click.option('-d', '--docker_image', default="chicheng/openicc:latest")
-@click.option('-n', '--num_workers', type=int, default=None)
-@click.option('-np', '--no_docker_pull', is_flag=True, default=True, help="pull docker image from docker hub")
+@click.option('-n', '--num_workers', type=int, default=15)# None
+@click.option('-np', '--no_docker_pull', is_flag=True, default=False, help="pull docker image from docker hub")
 @click.argument('session_dir', nargs=-1)
 # 定义主函数，它将接收命令行参数。
 def main(docker_image, num_workers, no_docker_pull, session_dir):
@@ -48,7 +48,7 @@ def main(docker_image, num_workers, no_docker_pull, session_dir):
     for session in session_dir:
         input_dir = pathlib.Path(os.path.expanduser(session)).joinpath('demos')
         input_video_dirs = [x.parent for x in input_dir.glob('*/raw_video.mp4')]
-        print(f'Found {len(input_video_dirs)} video dirs')
+        #print(f'Found {len(input_video_dirs)} video dirs')
          # 使用tqdm创建一个进度条，总进度为找到的视频目录数
         with tqdm(total=len(input_video_dirs)) as pbar:
             # one chunk per thread, therefore no synchronization needed 每个线程一个块，因此不需要同步
@@ -93,7 +93,7 @@ def main(docker_image, num_workers, no_docker_pull, session_dir):
                             cwd=str(video_dir),
                             stdout=stdo.open('w'),
                             stderr=stde.open('w')), 
-                        cmd, stdout_path, stderr_path))
+                            cmd, stdout_path, stderr_path))
                     # print(' '.join(cmd)) # 打印Docker命令，用于调试
                  # 等待所有任务完成，并更新进度条
                 completed, futures = concurrent.futures.wait(futures)
