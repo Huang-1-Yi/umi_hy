@@ -105,6 +105,22 @@ loop = asyncio.get_event_loop()
 async def save_pose_to_file(data, filename):
     async with aiofiles.open(filename, 'a') as file:
         await file.write(json.dumps(data.tolist()) + '\n')
+
+async def save_pose_to_file(data, filename):# TODO: very hacky now!!!
+    """异步保存动作数据到文件"""
+    try:
+        async with aiofiles.open(filename, 'a') as file:
+            await file.write(json.dumps(data) + '\n')
+    except Exception as e:
+        print(f"Error writing to {filename}: {e}")
+    # 改进2：直接用asyncio.run(save_pose_to_file(action, file_name))替代定义loop
+    # 自动创建新的事件循环并运行指定的协程函数，避免了事件循环冲突问题，尤其是在嵌套事件循环（Jupyter）或多线程环境下更稳定
+    # 改进3: 升级用asyncio.get_event_loop,在每次humancontrol开始后，loop = asyncio.get_event_loop() 会检查有没有线程，没有的话，就会创建，有的话，就直接调用
+    # 每次调用 loop.create_task，save_pose_to_file 会被包装为一个独立的异步任务并加入事件循环
+    # 即使有多个任务同时写入不同文件，它们在异步任务中是独立运行的，互不干扰
+    # 改进4：f"{data.tolist()}\n"改成了json.dumps(data) + '\n'，增强可用性，可保存更多类型数据
+
+
 @click.command()
 @click.option('--input', '-i', required=True, help='Path to checkpoint')
 @click.option('--output', '-o', required=True, help='Directory to save recording')
@@ -494,7 +510,8 @@ def main(input,
                     # print("env.exec_actions用7维数组action:{}".format(action))           # 打印action
                     print("env.exec_actions用gripper:{}".format(action[6]))           # 打印gripper
                     loop.run_until_complete(save_pose_to_file(action, file_name1))
-    
+                    # loop.create_task(save_pose_to_file(action, file_name1))
+
                     # 5.3 执行遥操作命令
                     env.exec_actions(                               # 执行动作
                         actions=[action], 
@@ -597,7 +614,8 @@ def main(input,
                         # execute actions
                         # print("env.exec_actions_this_target_poses.shape[1]:{}".format(this_target_poses.shape[1]))           # 打印max_speed
                         loop.run_until_complete(save_pose_to_file(action, file_name2))
-    
+                        # loop.create_task(save_pose_to_file(action, file_name2))
+                        
                         print("env.exec_actions用gripper:{}".format(this_target_poses[6]))           # 打印gripper
                         env.exec_actions(                                                   # 执行所有机器人动作，并将动作的时间戳设置为实际的时间点 execute actions
                             actions=this_target_poses,
