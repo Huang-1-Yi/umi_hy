@@ -175,3 +175,24 @@ cython_debug/
 # pretrained_model
 # test_script
 # test
+
+
+# .vscode/	IDE 配置（通常含本地环境设置），建议每个开发者自行配置，不跟踪
+# example_demo_session	示例或临时演示文件，不跟踪（除非是项目核心文件）
+# data/, data_local/	原始数据或本地数据，通常体积大或含敏感信息，不跟踪
+# data_workspace/	临时工作数据，不跟踪
+# outputs/	程序生成的输出文件（如日志、模型等），不跟踪
+# wandb/	WandB 实验日志，不跟踪（通过云端同步实验记录）
+# **/.DS_Store	macOS 系统文件，不跟踪
+# *.lprof	Python 性能分析文件，不跟踪
+# __pycache__/	Python 字节码缓存，不跟踪
+# *.py[cod], *$py.class	Python 编译文件，不跟踪
+# *.so	C 扩展模块，需通过源码编译，不跟踪
+# .Python, build/	Python 虚拟环境和构建产物，不跟踪
+# dist/, *.egg-info/	打包生成的发行文件，不跟踪
+# *.spec	PyInstaller 生成文件，不跟踪
+# htmlcov/, .coverage	测试覆盖率报告，不跟踪（可通过 CI 生成）
+# .env, .venv/	虚拟环境和环境变量文件，不跟踪（但可提交 .env.example 模板）
+# .idea/, .spyderproject	IDE 配置文件，不跟踪
+# .mypy_cache/	类型检查缓存，不跟踪
+# *.ckpt, pretrained_model	模型权重文件（通常体积大），不跟踪（可通过其他方式共享）
