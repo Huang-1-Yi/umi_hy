@@ -11,17 +11,17 @@ from diffusion_policy.dataset.base_dataset import BaseImageDataset # 导入BaseI
 from diffusion_policy.common.normalize_util import get_image_range_normalizer # 导入get_image_range_normalizer函数
 
 class PushTImageDataset(BaseImageDataset): # 定义PushTImageDataset类，继承自BaseImageDataset
-    def __init__(self,          # 初始化方法
-            zarr_path,          # zarr数据路径
-            horizon=1,          # 时间跨度
-            pad_before=0,       # 前填充步数
-            pad_after=0,        # 后填充步数
-            seed=42,            # 随机种子
-            val_ratio=0.0,      # 验证集比例
-            max_train_episodes=None  # 最大训练集数
+    def __init__(self,              # 初始化方法
+            zarr_path,              # zarr数据路径
+            horizon=1,              # 时间跨度
+            pad_before=0,           # 前填充步数
+            pad_after=0,            # 后填充步数
+            seed=42,                # 随机种子
+            val_ratio=0.0,          # 验证集比例
+            max_train_episodes=None # 最大训练集数
             ):
         
-        super().__init__()      # 调用父类初始化方法
+        super().__init__()          # 调用父类初始化方法
         self.replay_buffer = ReplayBuffer.copy_from_path(   # 从路径复制ReplayBuffer
             zarr_path, keys=['img', 'state', 'action'])     # 指定键列表
         val_mask = get_val_mask(                            # 获取验证掩码

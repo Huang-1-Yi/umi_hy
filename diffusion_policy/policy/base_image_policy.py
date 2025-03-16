@@ -1,10 +1,8 @@
 from typing import Dict
 import torch
 import torch.nn as nn
-# 混合类，它可能包含了一些与 PyTorch 模块相关的额外属性和方法，用于扩展 BaseImagePolicy 类的功能
-from diffusion_policy.model.common.module_attr_mixin import ModuleAttrMixin
-# 用于数据标准化的类，它可能定义了如何将输入数据转换为具有特定均值和标准差的分布，这通常是为了提高模型训练的稳定性和性能
-from diffusion_policy.model.common.normalizer import LinearNormalizer
+from diffusion_policy.model.common.module_attr_mixin import ModuleAttrMixin # 混合类，它可能包含了一些与 PyTorch 模块相关的额外属性和方法，用于扩展 BaseImagePolicy 类的功能
+from diffusion_policy.model.common.normalizer import LinearNormalizer       # 用于数据标准化的类，它可能定义了如何将输入数据转换为具有特定均值和标准差的分布，这通常是为了提高模型训练的稳定性和性能
 
 # 为图像输入的决策策略模型提供了一个框架，它定义了一些通用的接口和属性，具体的实现细节需要由子类来完成
 # 这样的设计使得不同的图像策略模型可以共享一些通用的代码和接口，同时又能根据具体的需求进行定制化的扩展。
